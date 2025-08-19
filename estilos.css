@@ -1,0 +1,201 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+body.fondo-login {
+    background: none;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', Arial, sans-serif;
+    color: #23395d;
+    position: relative;
+}
+.fondo-nubes {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 0;
+    background: linear-gradient(135deg, #eff6ff 0%, #5a8bad 50%, #c0f6ff 100%);
+}
+.login-container {
+    position: relative;
+    z-index: 1;
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 8px 32px 0 rgba(91, 155, 213, 0.18);
+    border-radius: 24px;
+    padding: 48px 36px 36px 36px;
+    width: 350px;
+    text-align: center;
+    animation: fadeIn 1s;
+    backdrop-filter: blur(2px);
+    transition: background 0.8s;
+    margin: 0 auto;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.titulo-login {
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 1.5em;
+    color: #23395d;
+    margin-bottom: 24px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px rgba(91,155,213,0.08);
+    transition: color 0.5s;
+}
+.icono-usuario {
+    width: 80px;
+    height: 80px;
+    background: #5b9bd5;
+    border-radius: 50%;
+    margin: -60px auto 20px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="white" viewBox="0 0 24 24" ...></svg>');
+    background-repeat: no-repeat;
+    background-position: center;
+    box-shadow: 0 4px 16px 0 rgba(91, 155, 213, 0.18);
+}
+.campo {
+    margin-bottom: 20px;
+    text-align: center;
+    width: 100%;
+}
+.campo label {
+    display: block;
+    margin-bottom: 5px;
+    color: #5b9bd5;
+    font-weight: 600;
+}
+.campo input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 12px;
+    border: 1px solid #b6e0fe;
+    background: #fff;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 1em;
+    margin-bottom: 0;
+    box-shadow: 0 2px 8px 0 rgba(91,155,213,0.08);
+    transition: border 0.4s, box-shadow 0.4s;
+    box-sizing: border-box;
+}
+.campo input:focus {
+    border: 1.5px solid #5b9bd5;
+    outline: none;
+    box-shadow: 0 4px 16px 0 rgba(91,155,213,0.18);
+}
+.opciones {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.95em;
+    margin-bottom: 24px;
+    color: #5b9bd5;
+    width: 100%;
+}
+.opciones a {
+    color: #5b9bd5;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+.opciones a:hover {
+    color: #23395d;
+    text-decoration: underline;
+}
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg, #23395d 0%, #5b9bd5 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1em;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 16px 0 rgba(91,155,213,0.12);
+    transition: background 0.5s, color 0.5s;
+}
+.btn-login:hover {
+    background: linear-gradient(90deg, #5b9bd5 0%, #23395d 100%);
+    color: #eaf6fb;
+}
+.error {
+    color: red;
+    margin-top: 10px;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(40px);}
+    to { opacity: 1; transform: translateY(0);}
+}
+
+/* Dashboard */
+.dashboard {
+    max-width: 600px;
+    margin: 40px auto;
+    background: #f7fbff;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 32px 0 rgba(91, 155, 213, 0.12);
+    font-family: 'Poppins', Arial, sans-serif;
+}
+.panel-opciones button {
+    margin: 10px 10px 10px 0;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #5b9bd5 0%, #b6e0fe 100%);
+    color: #23395d;
+    font-size: 1em;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s;
+}
+.panel-opciones button:hover {
+    background: linear-gradient(90deg, #b6e0fe 0%, #5b9bd5 100%);
+    color: #fff;
+}
+#formulario-ticket {
+    margin-top: 30px;
+}
+#formulario-ticket form label {
+    display: block;
+    margin-top: 10px;
+}
+#formulario-ticket form input,
+#formulario-ticket form select,
+#formulario-ticket form textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #b6e0fe;
+    margin-top: 5px;
+    background: #eaf6fb;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-size: 1em;
+}
+#formulario-ticket form button {
+    margin-top: 15px;
+    background: linear-gradient(90deg, #5b9bd5 0%, #b6e0fe 100%);
+    color: #23395d;
+    font-family: 'Poppins', Arial, sans-serif;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    transition: background 0.3s, color 0.3s;
+}
+#formulario-ticket form button:hover {
+    background: linear-gradient(90deg, #b6e0fe 0%, #5b9bd5 100%);
+    color: #fff;
+}
+form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
