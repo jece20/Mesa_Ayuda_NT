@@ -34,10 +34,16 @@ try {
         exit();
     }
     
-    // Obtener respuestas del ticket
-    $stmt = $pdo->prepare("SELECT * FROM respuestas WHERE id_ticket = ? ORDER BY fecha_respuesta ASC");
-    $stmt->execute([$ticket_id]);
-    $respuestas = $stmt->fetchAll();
+    // Obtener respuestas del ticket con nombre del usuario
+$stmt = $pdo->prepare("
+    SELECT r.*, u.nombre as nombre_usuario 
+    FROM respuestas r 
+    JOIN usuarios u ON r.id_usuario = u.id_usuario 
+    WHERE r.id_ticket = ? 
+    ORDER BY r.fecha_respuesta ASC
+");
+$stmt->execute([$ticket_id]);
+$respuestas = $stmt->fetchAll();
     
 } catch(PDOException $e) {
     header('Location: dashboard.php');
@@ -50,8 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mensaje'])) {
     
     if (!empty($mensaje)) {
         try {
-            $stmt = $pdo->prepare("INSERT INTO respuestas (id_ticket, autor, mensaje) VALUES (?, ?, ?)");
-            $stmt->execute([$ticket_id, $nombre, $mensaje]);
+            $stmt = $pdo->prepare("INSERT INTO respuestas (id_ticket, id_usuario, mensaje) VALUES (?, ?, ?)");
+            $stmt->execute([$ticket_id, $_SESSION['usuario_id'], $mensaje]);
             
             // Actualizar estado del ticket si es técnico
             if ($rol === 'tecnico' && $ticket['estado'] === 'Pendiente') {
@@ -261,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mensaje'])) {
                                 </div>
                                 <div class="flex-grow-1 ms-3">
                                     <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <h6 class="mb-0"><?php echo htmlspecialchars($respuesta['autor']); ?></h6>
+                                        <h6 class="mb-0"><?php echo htmlspecialchars($respuesta['nombre_usuario']); ?></h6>
                                         <small class="text-muted">
                                             <?php echo date('d/m/Y H:i', strtotime($respuesta['fecha_respuesta'])); ?>
                                         </small>
