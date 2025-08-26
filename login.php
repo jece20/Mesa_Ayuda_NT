@@ -1,98 +1,102 @@
 <?php
-session_start();
+require_once 'conexion.php';
 
-// Configuración de conexión
-$host = "localhost";
-$dbname = "mesa_de_ayuda";
-$username = "root";
-$password = "";
-$port = 3307; // Usa 3306 si es el puerto por defecto. Si tu MySQL está en 3307, cámbialo aquí.
+$error = '';
 
-$conn = new mysqli($host, $username, $password, $dbname, $port);
-
-// Verificar conexión
-if ($conn->connect_error) {
-    die("❌ Error de conexión a MySQL: " . $conn->connect_error);
-}
-
-// Inicializar error
-$error = "";
-
-// Procesar login
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $usuario = trim($_POST['usuario']);
-    $clave = $_POST['password'];
-
-    // Preparar consulta segura
-    $stmt = $conn->prepare("SELECT nombre_usuario, password_hash FROM usuarios WHERE nombre_usuario = ? LIMIT 1");
-    $stmt->bind_param("s", $usuario);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-
-    // Validar credenciales
-    if ($row && password_verify($clave, $row['password_hash'])) {
-        $_SESSION['usuario'] = $row['nombre_usuario'];
-        header("Location: dashboard.php");
-        exit;
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $correo = trim($_POST['correo']);
+    $contrasena = $_POST['contrasena'];
+    
+    if (empty($correo) || empty($contrasena)) {
+        $error = 'Por favor, complete todos los campos.';
     } else {
-        $error = "⚠️ Usuario o contraseña incorrectos";
+        try {
+            $stmt = $pdo->prepare("SELECT id_usuario, nombre, correo, contrasena, rol FROM usuarios WHERE correo = ?");
+            $stmt->execute([$correo]);
+            $usuario = $stmt->fetch();
+            
+            if ($usuario && $contrasena === $usuario['contrasena']) {
+                $_SESSION['usuario_id'] = $usuario['id_usuario'];
+                $_SESSION['nombre'] = $usuario['nombre'];
+                $_SESSION['correo'] = $usuario['correo'];
+                $_SESSION['rol'] = $usuario['rol'];
+                
+                header('Location: dashboard.php');
+                exit();
+            } else {
+                $error = 'Credenciales incorrectas.';
+            }
+        } catch(PDOException $e) {
+            $error = 'Error en el sistema. Intente más tarde.';
+        }
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Iniciar Sesión</title>
-  <!-- Bootstrap 5 -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background: #f0f2f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .login-card {
-      width: 100%;
-      max-width: 420px;
-      border-radius: 15px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Mesa de Ayuda</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="estilos.css" rel="stylesheet">
 </head>
 <body>
-  <div class="card login-card p-4">
-    <div class="card-body">
-      <h3 class="card-title text-center mb-4">🔐 Iniciar Sesión</h3>
-      
-      <?php if ($error): ?>
-        <div class="alert alert-danger text-center"><?= $error ?></div>
-      <?php endif; ?>
-
-      <form method="POST">
-        <div class="mb-3">
-          <label for="usuario" class="form-label">Usuario</label>
-          <input type="text" id="usuario" name="usuario" class="form-control" placeholder="Ingresa tu usuario" required>
+    <div class="container">
+        <div class="form-container fade-in">
+            <div class="text-center mb-4">
+                <i class="fas fa-headset fa-3x text-primary mb-3"></i>
+                <h1 class="form-title">Mesa de Ayuda</h1>
+                <p class="text-muted">Inicia sesión en tu cuenta</p>
+            </div>
+            
+            <?php if ($error): ?>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <?php echo htmlspecialchars($error); ?>
+                </div>
+            <?php endif; ?>
+            
+            <form method="POST" action="">
+                <div class="mb-3">
+                    <label for="correo" class="form-label">
+                        <i class="fas fa-envelope me-2"></i>Correo Electrónico
+                    </label>
+                    <input type="email" class="form-control" id="correo" name="correo" 
+                           value="<?php echo isset($_POST['correo']) ? htmlspecialchars($_POST['correo']) : ''; ?>" 
+                           required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="contrasena" class="form-label">
+                        <i class="fas fa-lock me-2"></i>Contraseña
+                    </label>
+                    <input type="password" class="form-control" id="contrasena" name="contrasena" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                </button>
+            </form>
+            
+            <div class="text-center mt-4">
+                <p class="text-muted">¿No tienes una cuenta?</p>
+                <a href="registro.php" class="btn btn-secondary">
+                    <i class="fas fa-user-plus me-2"></i>Registrarse
+                </a>
+            </div>
+            
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Usuarios de prueba: juan@correo.com, ana@correo.com, admin@correo.com (contraseña: 123)
+                </small>
+            </div>
         </div>
-        <div class="mb-3">
-          <label for="password" class="form-label">Contraseña</label>
-          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
-        </div>
-        <div class="form-check mb-3">
-          <input type="checkbox" class="form-check-input" id="remember" name="remember">
-          <label class="form-check-label" for="remember">Recuérdame</label>
-        </div>
-        <button type="submit" class="btn btn-primary w-100">Entrar</button>
-      </form>
-      
-      <div class="mt-3 text-center">
-        <a href="#" class="text-decoration-none">¿Olvidaste tu contraseña?</a>
-        <p class="mt-2">¿Nuevo aquí? <a href="registro.php" class="fw-bold text-decoration-none">Regístrate</a></p>
-      </div>
     </div>
-  </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
