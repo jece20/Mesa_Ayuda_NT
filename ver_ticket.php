@@ -35,19 +35,53 @@ try {
     }
     
     // Obtener respuestas del ticket con nombre del usuario
-$stmt = $pdo->prepare("
-    SELECT r.*, u.nombre as nombre_usuario 
+$stmt = $pdo->prepare("    SELECT r.*, u.nombre as nombre_usuario 
     FROM respuestas r 
     JOIN usuarios u ON r.id_usuario = u.id_usuario 
     WHERE r.id_ticket = ? 
-    ORDER BY r.fecha_respuesta ASC
-");
+    ORDER BY r.fecha_respuesta ASC");
 $stmt->execute([$ticket_id]);
 $respuestas = $stmt->fetchAll();
     
 } catch(PDOException $e) {
     header('Location: dashboard.php');
     exit();
+}
+
+// Si el usuario es admin, obtener la lista de técnicos
+$tecnicos = [];
+if ($rol === 'admin') {
+    try {
+        $stmt = $pdo->prepare("SELECT id_usuario, nombre FROM usuarios WHERE rol = 'tecnico' AND activo = TRUE");
+        $stmt->execute();
+        $tecnicos = $stmt->fetchAll();
+    } catch (PDOException $e) {
+        $error = 'Error al cargar la lista de técnicos.';
+    }
+}
+
+// Procesar asignación de técnico (solo para admin)
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['asignar_tecnico'])) {
+    if ($rol === 'admin') {
+        $id_tecnico_asignado = $_POST['id_tecnico'];
+        
+        try {
+            // Usar el procedimiento almacenado que ya existe
+            $stmt = $pdo->prepare("CALL AsignarTecnico(?, ?, ?)");
+            $stmt->execute([$ticket_id, $id_tecnico_asignado, $usuario_id]);
+            
+            // Opcional: Cambiar estado a 'En proceso' al asignar
+            if ($ticket['estado'] === 'Pendiente') {
+                $stmt = $pdo->prepare("UPDATE tickets SET estado = 'En proceso' WHERE id_ticket = ?");
+                $stmt->execute([$ticket_id]);
+            }
+
+            header("Location: ver_ticket.php?id=$ticket_id&asignacion=exito");
+            exit();
+        } catch (PDOException $e) {
+            $error = 'Error al asignar el técnico.';
+        }
+    }
 }
 
 // Procesar nueva respuesta
@@ -75,6 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mensaje'])) {
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="es">
@@ -223,6 +258,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mensaje'])) {
                                 <?php echo date('d/m/Y H:i', strtotime($ticket['fecha_ultima_actualizacion'])); ?>
                             </div>
                             
+                            <?php if ($rol === 'admin'): ?>
+                                <hr>
+                                <div class="mb-3">
+                                    <strong>Técnico Asignado:</strong><br>
+                                    <?php 
+                                    $nombre_tecnico_asignado = 'Sin asignar';
+                                    if ($ticket['id_tecnico_asignado']) {
+                                        $stmt_tecnico = $pdo->prepare("SELECT nombre FROM usuarios WHERE id_usuario = ?");
+                                        $stmt_tecnico->execute([$ticket['id_tecnico_asignado']]);
+                                        $tecnico_actual = $stmt_tecnico->fetch();
+                                        if ($tecnico_actual) {
+                                            $nombre_tecnico_asignado = $tecnico_actual['nombre'];
+                                        }
+                                    }
+                                    echo htmlspecialchars($nombre_tecnico_asignado);
+                                    ?>
+                                </div>
+                                <form method="POST" action="">
+                                    <div class="mb-3">
+                                        <label for="id_tecnico" class="form-label"><strong>Asignar a:</strong></label>
+                                        <select name="id_tecnico" id="id_tecnico" class="form-control">
+                                            <option value="">-- Seleccionar Técnico --</option>
+                                            <?php foreach ($tecnicos as $tecnico): ?>
+                                                <option value="<?php echo $tecnico['id_usuario']; ?>" <?php echo ($ticket['id_tecnico_asignado'] == $tecnico['id_usuario']) ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($tecnico['nombre']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <button type="submit" name="asignar_tecnico" class="btn btn-primary w-100">
+                                        <i class="fas fa-user-check me-2"></i>Asignar Técnico
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+
                             <?php if ($rol === 'tecnico' && $ticket['estado'] === 'Pendiente'): ?>
                                 <form method="POST" action="" class="mt-3">
                                     <button type="submit" name="cambiar_estado" value="en_proceso" class="btn btn-warning w-100">

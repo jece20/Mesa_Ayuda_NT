@@ -10,6 +10,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $contrasena = $_POST['contrasena'];
     $confirmar_contrasena = $_POST['confirmar_contrasena'];
     
+    // Capturar y validar el rol
+    $rol_seleccionado = isset($_POST['rol']) ? $_POST['rol'] : 'cliente';
+    if (!in_array($rol_seleccionado, ['cliente', 'tecnico', 'admin'])) {
+        $rol_seleccionado = 'cliente'; // Default a cliente si el valor es inválido
+    }
+
     if (empty($nombre) || empty($correo) || empty($contrasena) || empty($confirmar_contrasena)) {
         $error = 'Por favor, complete todos los campos.';
     } elseif ($contrasena !== $confirmar_contrasena) {
@@ -25,9 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if ($stmt->fetch()) {
                 $error = 'Este correo electrónico ya está registrado.';
             } else {
-                // Insertar nuevo usuario
-                $stmt = $pdo->prepare("INSERT INTO usuarios (nombre, correo, contrasena, rol) VALUES (?, ?, ?, 'cliente')");
-                $stmt->execute([$nombre, $correo, $contrasena]);
+                // Insertar nuevo usuario con el rol seleccionado
+                $stmt = $pdo->prepare("INSERT INTO usuarios (nombre, correo, contrasena, rol) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$nombre, $correo, $contrasena, $rol_seleccionado]);
                 
                 $success = 'Usuario registrado exitosamente. Ahora puedes iniciar sesión.';
                 
@@ -108,6 +114,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </label>
                     <input type="password" class="form-control" id="confirmar_contrasena" name="confirmar_contrasena" 
                            minlength="3" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="rol" class="form-label">
+                        <i class="fas fa-user-shield me-2"></i>Selecciona tu Rol
+                    </label>
+                    <select class="form-control" id="rol" name="rol">
+                        <option value="cliente" selected>Cliente</option>
+                        <option value="tecnico">Técnico</option>
+                        <option value="admin">Administrador</option>
+                    </select>
                 </div>
                 
                 <button type="submit" class="btn btn-primary">

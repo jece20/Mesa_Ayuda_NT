@@ -15,6 +15,16 @@ $categoria_filtro = isset($_GET['categoria']) ? $_GET['categoria'] : '';
 $where_conditions = [];
 $params = [];
 
+// Filtro base según el rol del usuario
+if ($rol === 'tecnico') {
+    $where_conditions[] = "t.id_tecnico_asignado = ?";
+    $params[] = $usuario_id;
+} elseif ($rol === 'cliente') {
+    $where_conditions[] = "t.id_usuario = ?";
+    $params[] = $usuario_id;
+}
+// El admin no tiene restricciones
+
 if ($estado_filtro) {
     $where_conditions[] = "t.estado = ?";
     $params[] = $estado_filtro;
@@ -34,8 +44,10 @@ $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_c
 
 try {
     // Obtener tickets con filtros
-    $sql = "SELECT t.*, u.nombre as cliente FROM tickets t 
-            JOIN usuarios u ON t.id_usuario = u.id_usuario 
+    $sql = "SELECT t.*, u.nombre as cliente, tec.nombre as tecnico_asignado 
+            FROM tickets t 
+            JOIN usuarios u ON t.id_usuario = u.id_usuario
+            LEFT JOIN usuarios tec ON t.id_tecnico_asignado = tec.id_usuario
             $where_clause 
             ORDER BY t.prioridad DESC, t.fecha_creacion DESC";
     
@@ -239,6 +251,9 @@ try {
                                         <th>ID</th>
                                         <th>Cliente</th>
                                         <th>Asunto</th>
+                                        <?php if ($rol === 'admin'): ?>
+                                            <th>Técnico Asignado</th>
+                                        <?php endif; ?>
                                         <th>Categoría</th>
                                         <th>Prioridad</th>
                                         <th>Estado</th>
@@ -257,6 +272,15 @@ try {
                                                     <?php echo substr(htmlspecialchars($ticket['descripcion']), 0, 100); ?>...
                                                 </small>
                                             </td>
+                                            <?php if ($rol === 'admin'): ?>
+                                                <td>
+                                                    <?php if ($ticket['tecnico_asignado']): ?>
+                                                        <span class="badge bg-info"><?php echo htmlspecialchars($ticket['tecnico_asignado']); ?></span>
+                                                    <?php else: ?>
+                                                        <span class="badge bg-secondary">Sin asignar</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                            <?php endif; ?>
                                             <td>
                                                 <span class="badge bg-primary"><?php echo $ticket['categoria']; ?></span>
                                             </td>

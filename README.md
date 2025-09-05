@@ -4,14 +4,18 @@ Un sistema completo de gestión de tickets de soporte técnico con roles diferen
 
 ## Características
 
-- **Sistema de Autenticación**: Login y registro de usuarios
-- **Roles Diferenciados**: Cliente, Técnico y Administrador
-- **Gestión de Tickets**: Crear, ver y responder tickets
-- **Dashboard Personalizado**: Cada rol tiene su propio panel
-- **Sistema de Respuestas**: Conversaciones en tiempo real
-- **Filtros Avanzados**: Búsqueda por estado, prioridad y categoría
-- **Gestión de Usuarios**: Administración completa (solo admin)
-- **Diseño Responsivo**: Interfaz moderna y profesional
+- **Sistema de Autenticación**: Login y registro de usuarios.
+- **Roles Diferenciados**: Cliente, Técnico y Administrador con permisos específicos.
+- **Gestión de Tickets**: Crear, ver y responder tickets.
+- **Asignación de Tickets (Nuevo)**: Los administradores pueden asignar tickets específicos a los técnicos.
+- **Flujo de Trabajo por Rol (Mejorado)**: Los técnicos solo ven los tickets que les han sido asignados, asegurando un flujo de trabajo ordenado.
+- **Registro con Roles (Nuevo)**: El formulario de registro ahora permite seleccionar un rol (Cliente, Técnico, Administrador).
+- **Dashboard Personalizado**: Cada rol tiene su propio panel con estadísticas y acciones relevantes.
+- **Sistema de Respuestas**: Conversaciones en tiempo real dentro de cada ticket.
+- **Logs de Auditoría Mejorados**: El sistema ahora guarda el **nombre** del técnico cuando se le asigna un ticket, para un mejor seguimiento.
+- **Filtros Avanzados**: Búsqueda por estado, prioridad y categoría.
+- **Gestión de Usuarios**: Administración completa de usuarios para el rol de admin.
+- **Diseño Moderno y Responsivo**: Interfaz profesional con un fondo degradado y adaptable a dispositivos móviles.
 
 ## Requisitos del Sistema
 
@@ -24,163 +28,71 @@ Un sistema completo de gestión de tickets de soporte técnico con roles diferen
 
 ### 1. Configuración de la Base de Datos
 
-**Opción A: Base de Datos Mejorada (Recomendada)**
-1. Importa el archivo `mesa_ayuda2.sql` en tu servidor MySQL
-2. Este archivo crea una base de datos completa con tablas, vistas, procedimientos y datos de ejemplo
-
-**Opción B: Base de Datos Básica**
-1. Importa el archivo `mesa_ayuda.sql` en tu servidor MySQL
-2. Base de datos simple con funcionalidades básicas
+1.  Importa el archivo `mesa_ayuda2.sql` en tu servidor MySQL. Este archivo contiene la estructura de tablas, vistas, **procedimientos almacenados actualizados** y datos de ejemplo.
+2.  **Importante**: Si ya tenías la base de datos, ejecuta el script para actualizar el procedimiento `AsignarTecnico` que se te proporcionó para habilitar el log con el nombre del técnico.
 
 ### 2. Configuración de la Conexión
 
-1. Abre `conexion.php`
-2. Modifica las credenciales de la base de datos según tu elección:
-
-   **Para mesa_ayuda2 (Recomendado):**
-   ```php
-   $host = 'localhost';
-   $dbname = 'mesa_ayuda2';
-   $username = 'root';
-   $password = '';
-   ```
-
-   **Para mesa_ayuda (Básico):**
-   ```php
-   $host = 'localhost';
-   $dbname = 'mesa_ayuda';
-   $username = 'root';
-   $password = '';
-   ```
+1.  Abre `conexion.php`.
+2.  Modifica las credenciales de la base de datos:
+    ```php
+    $host = 'localhost';
+    $dbname = 'mesa_ayuda2';
+    $username = 'root';
+    $password = '';
+    ```
 
 ### 3. Configuración del Servidor Web
 
-1. Coloca todos los archivos en tu directorio web (htdocs en XAMPP)
-2. Asegúrate de que PHP tenga permisos de escritura
-
-## Estructura de Archivos
-
-```
-MesaAyuda_Final/
-├── conexion.php              # Conexión a la base de datos
-├── estilos.css               # Estilos CSS personalizados
-├── index.php                 # Página principal (redirección)
-├── login.php                 # Formulario de login
-├── registro.php              # Formulario de registro
-├── dashboard.php             # Dashboard principal
-├── crear_ticket.php          # Crear nuevos tickets
-├── ver_ticket.php            # Ver y responder tickets
-├── gestion_usuarios.php      # Gestión de usuarios (admin)
-├── todos_tickets.php         # Lista de todos los tickets
-├── logout.php                # Cerrar sesión
-├── mesa_ayuda.sql            # Base de datos básica
-├── mesa_ayuda2.sql           # Base de datos mejorada (RECOMENDADA)
-├── test_conexion.php         # Archivo de prueba de conexión
-├── INSTRUCCIONES_PHPMYADMIN.md # Guía de instalación
-└── README.md                 # Este archivo
-```
-
-## Usuarios de Prueba
-
-El sistema incluye usuarios de prueba predefinidos:
-
-### **Base de Datos mesa_ayuda2 (Recomendada):**
-- 🔵 **Cliente**: juan@correo.com / 123
-- 🟡 **Técnico**: ana@correo.com / 123
-- 🟡 **Técnico**: carlos@correo.com / 123
-- 🔵 **Cliente**: maria@correo.com / 123
-- 🔴 **Admin**: admin@correo.com / 123
-- 🔵 **Cliente**: pedro@correo.com / 123
-- 🟡 **Técnico**: laura@correo.com / 123
-
-### **Base de Datos mesa_ayuda (Básica):**
-- **Cliente**: juan@correo.com / 123
-- **Técnico**: ana@correo.com / 123  
-- **Administrador**: admin@correo.com / 123
+1.  Coloca todos los archivos en tu directorio web (htdocs en XAMPP).
+2.  Abre la aplicación en tu navegador.
 
 ## Funcionalidades por Rol
 
 ### Cliente
-- Crear tickets de soporte
-- Ver sus propios tickets
-- Responder a tickets existentes
-- Dashboard con estadísticas personales
+- Crear tickets de soporte.
+- Ver el estado y las respuestas de sus propios tickets.
+- Dashboard con estadísticas personales.
 
 ### Técnico
-- Ver tickets pendientes
-- Responder y resolver tickets
-- Cambiar estado de tickets
-- Dashboard con métricas de trabajo
+- Dashboard con métricas de trabajo sobre **sus tickets asignados**.
+- Ver y gestionar **únicamente** los tickets que le son asignados por un administrador.
+- Responder y cambiar el estado de sus tickets.
 
 ### Administrador
-- Gestión completa de usuarios
-- Ver todos los tickets del sistema
-- Cambiar roles de usuarios
-- Estadísticas del sistema completo
+- **Visión Global**: Ver todos los tickets del sistema.
+- **Asignación de Tickets**: Asignar cualquier ticket a un técnico específico desde la vista de detalle del ticket.
+- **Gestión Completa de Usuarios**: Crear, editar y eliminar usuarios y sus roles.
+- Dashboard con estadísticas globales del sistema.
 
-## Características Técnicas
+## Usuarios de Prueba
 
-- **Seguridad**: Validación de sesiones y roles
-- **Base de Datos**: Consultas preparadas (prepared statements)
-- **Frontend**: Bootstrap 5 + CSS personalizado
-- **Responsive**: Diseño adaptable a móviles
-- **Validación**: Validación del lado del servidor
-- **Manejo de Errores**: Mensajes informativos para el usuario
+El sistema incluye usuarios de prueba predefinidos en `mesa_ayuda2.sql`:
+
+-   🔵 **Cliente**: juan@correo.com / 123
+-   🟡 **Técnico**: ana@correo.com / 123
+-   🔴 **Admin**: admin@correo.com / 123
+-   *(Y más usuarios de ejemplo...)*
 
 ## Personalización
 
-### Colores
-Los colores principales se pueden modificar en `estilos.css`:
+### Colores y Estilos
+Los colores principales y el fondo de la aplicación se pueden modificar en la parte superior del archivo `estilos.css`.
+
 ```css
+/* Ejemplo de variables de color en :root */
 :root {
     --primary-blue: #2563eb;
     --secondary-blue: #1d4ed8;
-    --accent-blue: #3b82f6;
     /* ... más colores */
 }
+
+/* Estilo del fondo principal */
+body {
+    background: linear-gradient(135deg, #c2e9fb 0%, #a1c4fd 100%);
+    /* ... */
+}
 ```
-
-### Categorías de Tickets
-Modifica las opciones en `crear_ticket.php`:
-```php
-<option value="General">General</option>
-<option value="Software">Software</option>
-<option value="Hardware">Hardware</option>
-<!-- Agregar más categorías aquí -->
-```
-
-## Solución de Problemas
-
-### Error de Conexión
-- Verifica que MySQL esté ejecutándose
-- Confirma las credenciales en `conexion.php`
-- Asegúrate de que la base de datos `mesa_ayuda` exista
-
-### Página en Blanco
-- Verifica los logs de error de PHP
-- Confirma que todas las dependencias estén instaladas
-- Verifica permisos de archivos
-
-### Problemas de Sesión
-- Verifica que las cookies estén habilitadas
-- Confirma que `session_start()` esté en todos los archivos necesarios
-
-## Mejoras Futuras
-
-- Sistema de notificaciones por email
-- Adjuntar archivos a tickets
-- Reportes y estadísticas avanzadas
-- API REST para integración externa
-- Sistema de calificaciones
-- Base de conocimientos (KB)
-
-## Soporte
-
-Para soporte técnico o preguntas sobre el sistema, contacta al administrador del sistema.
-
-## Licencia
-
-Este proyecto es de uso libre para fines educativos y comerciales.
 
 ---
 

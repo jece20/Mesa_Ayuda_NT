@@ -191,15 +191,13 @@ try {
                                                 <?php if ($usuario['id_usuario'] != $usuario_id): ?>
                                                     <!-- Cambiar Rol -->
                                                     <button type="button" class="btn btn-action btn-edit btn-sm" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#cambiarRolModal<?php echo $usuario['id_usuario']; ?>">
+                                                            onclick="abrirModalRol(<?php echo $usuario['id_usuario']; ?>, '<?php echo htmlspecialchars($usuario['nombre']); ?>', '<?php echo $usuario['rol']; ?>')">
                                                         <i class="fas fa-user-edit"></i>
                                                     </button>
                                                     
                                                     <!-- Eliminar Usuario -->
                                                     <button type="button" class="btn btn-action btn-delete btn-sm" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#eliminarUsuarioModal<?php echo $usuario['id_usuario']; ?>">
+                                                            onclick="abrirModalEliminar(<?php echo $usuario['id_usuario']; ?>, '<?php echo htmlspecialchars($usuario['nombre']); ?>', <?php echo $usuario['total_tickets']; ?>)">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 <?php else: ?>
@@ -207,73 +205,6 @@ try {
                                                 <?php endif; ?>
                                             </td>
                                         </tr>
-                                        
-                                        <!-- Modal para cambiar rol -->
-                                        <div class="modal fade" id="cambiarRolModal<?php echo $usuario['id_usuario']; ?>" tabindex="-1">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">Cambiar Rol de Usuario</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <form method="POST" action="">
-                                                        <div class="modal-body">
-                                                            <p>¿Estás seguro de que quieres cambiar el rol de <strong><?php echo htmlspecialchars($usuario['nombre']); ?></strong>?</p>
-                                                            <div class="mb-3">
-                                                                <label for="nuevo_rol" class="form-label">Nuevo Rol:</label>
-                                                                <select class="form-control" name="nuevo_rol" required>
-                                                                    <option value="cliente" <?php echo $usuario['rol'] === 'cliente' ? 'selected' : ''; ?>>Cliente</option>
-                                                                    <option value="tecnico" <?php echo $usuario['rol'] === 'tecnico' ? 'selected' : ''; ?>>Técnico</option>
-                                                                    <option value="admin" <?php echo $usuario['rol'] === 'admin' ? 'selected' : ''; ?>>Administrador</option>
-                                                                </select>
-                                                            </div>
-                                                            <input type="hidden" name="id_usuario" value="<?php echo $usuario['id_usuario']; ?>">
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                            <button type="submit" name="cambiar_rol" class="btn btn-primary">Cambiar Rol</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <!-- Modal para eliminar usuario -->
-                                        <div class="modal fade" id="eliminarUsuarioModal<?php echo $usuario['id_usuario']; ?>" tabindex="-1">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">Eliminar Usuario</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <div class="alert alert-warning">
-                                                            <i class="fas fa-exclamation-triangle me-2"></i>
-                                                            <strong>¡Advertencia!</strong> Esta acción no se puede deshacer.
-                                                        </div>
-                                                        <p>¿Estás seguro de que quieres eliminar al usuario <strong><?php echo htmlspecialchars($usuario['nombre']); ?></strong>?</p>
-                                                        <?php if ($usuario['total_tickets'] > 0): ?>
-                                                            <div class="alert alert-info">
-                                                                <i class="fas fa-info-circle me-2"></i>
-                                                                Este usuario tiene <?php echo $usuario['total_tickets']; ?> tickets asociados y no puede ser eliminado.
-                                                            </div>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                                        <?php if ($usuario['total_tickets'] == 0): ?>
-                                                            <form method="POST" action="" style="display: inline;">
-                                                                <input type="hidden" name="id_usuario" value="<?php echo $usuario['id_usuario']; ?>">
-                                                                <button type="submit" name="eliminar_usuario" class="btn btn-danger" 
-                                                                        onclick="return confirm('¿Estás completamente seguro?')">
-                                                                    <i class="fas fa-trash me-2"></i>Eliminar
-                                                                </button>
-                                                            </form>
-                                                        <?php endif; ?>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
@@ -290,6 +221,189 @@ try {
         </div>
     </div>
     
+    <!-- Modal para cambiar rol (reutilizable) -->
+    <div class="modal fade" id="cambiarRolModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cambiar Rol de Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="">
+                    <div class="modal-body">
+                        <p>¿Estás seguro de que quieres cambiar el rol de <strong id="nombreUsuarioRol"></strong>?</p>
+                        <div class="mb-3">
+                            <label for="nuevo_rol" class="form-label">Nuevo Rol:</label>
+                            <select class="form-control" name="nuevo_rol" id="nuevo_rol" required>
+                                <option value="cliente">Cliente</option>
+                                <option value="tecnico">Técnico</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                        <input type="hidden" name="id_usuario" id="id_usuario_rol">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" name="cambiar_rol" class="btn btn-primary">Cambiar Rol</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para eliminar usuario (reutilizable) -->
+    <div class="modal fade" id="eliminarUsuarioModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Eliminar Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>¡Advertencia!</strong> Esta acción no se puede deshacer.
+                    </div>
+                    <p>¿Estás seguro de que quieres eliminar al usuario <strong id="nombreUsuarioEliminar"></strong>?</p>
+                    <div class="alert alert-info" id="infoTickets" style="display: none;">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <span id="mensajeTickets"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form method="POST" action="" style="display: inline;" id="formEliminar">
+                        <input type="hidden" name="id_usuario" id="id_usuario_eliminar">
+                        <button type="submit" name="eliminar_usuario" class="btn btn-danger" 
+                                onclick="return confirm('¿Estás completamente seguro?')">
+                            <i class="fas fa-trash me-2"></i>Eliminar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Script para manejar mejor los modales y evitar parpadeo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Prevenir múltiples instancias de modales
+            let modalInstances = {};
+            
+            // Función para inicializar modales
+            function initializeModals() {
+                const modalElements = document.querySelectorAll('.modal');
+                
+                modalElements.forEach(function(modal) {
+                    const modalId = modal.getAttribute('id');
+                    
+                    // Crear instancia del modal si no existe
+                    if (!modalInstances[modalId]) {
+                        modalInstances[modalId] = new bootstrap.Modal(modal, {
+                            backdrop: 'static',
+                            keyboard: true,
+                            focus: true
+                        });
+                    }
+                });
+            }
+            
+            // Inicializar modales al cargar la página
+            initializeModals();
+            
+            // Limpiar instancias cuando se cierran los modales
+            document.addEventListener('hidden.bs.modal', function(e) {
+                const modalId = e.target.getAttribute('id');
+                if (modalInstances[modalId]) {
+                    // Resetear el estado del modal
+                    e.target.classList.remove('show');
+                    e.target.style.display = 'none';
+                    e.target.removeAttribute('aria-modal');
+                    e.target.removeAttribute('role');
+                    e.target.setAttribute('aria-hidden', 'true');
+                }
+            });
+            
+            // Prevenir cierre accidental de modales
+            document.addEventListener('show.bs.modal', function(e) {
+                e.target.classList.add('show');
+                e.target.style.display = 'block';
+                e.target.setAttribute('aria-modal', 'true');
+                e.target.setAttribute('role', 'dialog');
+                e.target.removeAttribute('aria-hidden');
+            });
+        });
+        
+        // Función para abrir modal de cambio de rol
+        function abrirModalRol(idUsuario, nombreUsuario, rolActual) {
+            // Cerrar cualquier modal abierto
+            const modalesAbiertos = document.querySelectorAll('.modal.show');
+            modalesAbiertos.forEach(function(modal) {
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            });
+            
+            // Esperar un momento y luego abrir el modal
+            setTimeout(function() {
+                // Llenar los datos del modal
+                document.getElementById('nombreUsuarioRol').textContent = nombreUsuario;
+                document.getElementById('id_usuario_rol').value = idUsuario;
+                document.getElementById('nuevo_rol').value = rolActual;
+                
+                // Mostrar el modal
+                const modal = new bootstrap.Modal(document.getElementById('cambiarRolModal'), {
+                    backdrop: 'static',
+                    keyboard: true,
+                    focus: true
+                });
+                modal.show();
+            }, 150);
+        }
+        
+        // Función para abrir modal de eliminación
+        function abrirModalEliminar(idUsuario, nombreUsuario, totalTickets) {
+            // Cerrar cualquier modal abierto
+            const modalesAbiertos = document.querySelectorAll('.modal.show');
+            modalesAbiertos.forEach(function(modal) {
+                const modalInstance = bootstrap.Modal.getInstance(modal);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            });
+            
+            // Esperar un momento y luego abrir el modal
+            setTimeout(function() {
+                // Llenar los datos del modal
+                document.getElementById('nombreUsuarioEliminar').textContent = nombreUsuario;
+                document.getElementById('id_usuario_eliminar').value = idUsuario;
+                
+                // Mostrar/ocultar información de tickets
+                const infoTickets = document.getElementById('infoTickets');
+                const formEliminar = document.getElementById('formEliminar');
+                
+                if (totalTickets > 0) {
+                    document.getElementById('mensajeTickets').textContent = 
+                        'Este usuario tiene ' + totalTickets + ' tickets asociados y no puede ser eliminado.';
+                    infoTickets.style.display = 'block';
+                    formEliminar.style.display = 'none';
+                } else {
+                    infoTickets.style.display = 'none';
+                    formEliminar.style.display = 'inline';
+                }
+                
+                // Mostrar el modal
+                const modal = new bootstrap.Modal(document.getElementById('eliminarUsuarioModal'), {
+                    backdrop: 'static',
+                    keyboard: true,
+                    focus: true
+                });
+                modal.show();
+            }, 150);
+        }
+    </script>
 </body>
 </html>

@@ -28,25 +28,25 @@ try {
         $tickets = $stmt->fetchAll();
         
     } elseif ($rol === 'tecnico') {
-        // Estadísticas para técnicos
-        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM tickets WHERE estado IN ('Pendiente', 'En proceso')");
-        $stmt->execute();
+        // Estadísticas para técnicos (solo los asignados a él)
+        $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM tickets WHERE id_tecnico_asignado = ? AND estado IN ('Pendiente', 'En proceso')");
+        $stmt->execute([$usuario_id]);
         $total_pendientes = $stmt->fetch()['total'];
         
-        $stmt = $pdo->prepare("SELECT COUNT(*) as en_proceso FROM tickets WHERE estado = 'En proceso'");
-        $stmt->execute();
+        $stmt = $pdo->prepare("SELECT COUNT(*) as en_proceso FROM tickets WHERE id_tecnico_asignado = ? AND estado = 'En proceso'");
+        $stmt->execute([$usuario_id]);
         $en_proceso = $stmt->fetch()['en_proceso'];
         
-        $stmt = $pdo->prepare("SELECT COUNT(*) as resueltos FROM tickets WHERE estado = 'Resuelto'");
-        $stmt->execute();
+        $stmt = $pdo->prepare("SELECT COUNT(*) as resueltos FROM tickets WHERE id_tecnico_asignado = ? AND estado = 'Resuelto'");
+        $stmt->execute([$usuario_id]);
         $resueltos = $stmt->fetch()['resueltos'];
         
-        // Tickets pendientes para el técnico
+        // Tickets pendientes asignados al técnico
         $stmt = $pdo->prepare("SELECT t.*, u.nombre as cliente FROM tickets t 
                               JOIN usuarios u ON t.id_usuario = u.id_usuario 
-                              WHERE t.estado IN ('Pendiente', 'En proceso') 
+                              WHERE t.id_tecnico_asignado = ? AND t.estado IN ('Pendiente', 'En proceso') 
                               ORDER BY t.prioridad DESC, t.fecha_creacion ASC LIMIT 5");
-        $stmt->execute();
+        $stmt->execute([$usuario_id]);
         $tickets = $stmt->fetchAll();
         
     } else { // admin
