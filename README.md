@@ -96,4 +96,4 @@ body {
 
 ---
 
-**Desarrollado con ❤️ para facilitar la gestión de soporte técnico**
+**Desarrollado para facilitar la gestión de soporte técnico**
