@@ -120,8 +120,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mensaje'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="estilos.css" rel="stylesheet">
+    <style>
+        #notification-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1050;
+            display: none;
+        }
+    </style>
 </head>
 <body>
+    <div id="notification-bar"></div>
+
     <!-- Navegación -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
@@ -245,7 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mensaje'])) {
                             </div>
                             <div class="mb-3">
                                 <strong>Estado:</strong><br>
-                                <span class="estado-<?php echo str_replace(' ', '-', strtolower($ticket['estado'])); ?>">
+                                <span id="ticket-status" class="estado-<?php echo str_replace(' ', '-', strtolower($ticket['estado'])); ?>">
                                     <?php echo $ticket['estado']; ?>
                                 </span>
                             </div>
@@ -255,7 +267,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mensaje'])) {
                             </div>
                             <div class="mb-3">
                                 <strong>Última Actualización:</strong><br>
-                                <?php echo date('d/m/Y H:i', strtotime($ticket['fecha_ultima_actualizacion'])); ?>
+                                <span id="last-update"><?php echo date('d/m/Y H:i', strtotime($ticket['fecha_ultima_actualizacion'])); ?></span>
                             </div>
                             
                             <?php if ($rol === 'admin'): ?>
@@ -373,5 +385,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mensaje'])) {
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ticketId = <?php echo $ticket_id; ?>;
+            const statusSpan = document.getElementById('ticket-status');
+            const notificationBar = document.getElementById('notification-bar');
+
+            setInterval(function () {
+                fetch(`get_estado_ticket.php?id=${ticketId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            console.error(data.error);
+                            return;
+                        }
+
+                        const nuevoEstado = data.estado;
+                        const estadoActual = statusSpan.textContent.trim();
+
+                        if (nuevoEstado !== estadoActual) {
+                            // Actualizar el texto y la clase del estado
+                            statusSpan.textContent = nuevoEstado;
+                            statusSpan.className = 'estado-' + nuevoEstado.toLowerCase().replace(' ', '-');
+
+                            // Mostrar notificación
+                            notificationBar.innerHTML = '<div class="alert alert-info alert-dismissible fade show" role="alert">' +
+                                'El estado del ticket ha sido actualizado a: <strong>' + nuevoEstado + '</strong>' +
+                                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                                '</div>';
+                            notificationBar.style.display = 'block';
+
+                            // Actualizar la fecha de última actualización (opcional, pero recomendado)
+                            document.getElementById('last-update').textContent = new Date().toLocaleString('es-ES');
+                        }
+                    })
+                    .catch(error => console.error('Error al verificar el estado del ticket:', error));
+            }, 5000); // Verificar cada 5 segundos
+        });
+    </script>
 </body>
 </html>

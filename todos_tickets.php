@@ -5,6 +5,26 @@ verificarLogin();
 $usuario_id = $_SESSION['usuario_id'];
 $rol = $_SESSION['rol'];
 $nombre = $_SESSION['nombre'];
+$success = '';
+$error = '';
+
+// Procesar asignación de técnico por parte del admin
+if ($rol === 'admin' && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['asignar_tecnico'])) {
+    $id_ticket_asignar = $_POST['id_ticket_asignar'];
+    $id_tecnico = $_POST['id_tecnico'];
+
+    if (empty($id_tecnico)) {
+        $error = "Por favor, seleccione un técnico.";
+    } else {
+        try {
+            $stmt = $pdo->prepare("UPDATE tickets SET id_tecnico_asignado = ? WHERE id_ticket = ?");
+            $stmt->execute([$id_tecnico, $id_ticket_asignar]);
+            $success = "Ticket asignado correctamente.";
+        } catch (PDOException $e) {
+            $error = "Error al asignar el ticket.";
+        }
+    }
+}
 
 // Filtros
 $estado_filtro = isset($_GET['estado']) ? $_GET['estado'] : '';
@@ -67,6 +87,13 @@ try {
     $stmt = $pdo->prepare("SELECT DISTINCT categoria FROM tickets ORDER BY categoria");
     $stmt->execute();
     $categorias = $stmt->fetchAll();
+
+    // Obtener lista de técnicos para el modal de asignación
+    if ($rol === 'admin') {
+        $stmt_tecnicos = $pdo->prepare("SELECT id_usuario, nombre FROM usuarios WHERE rol = 'tecnico' AND activo = TRUE ORDER BY nombre");
+        $stmt_tecnicos->execute();
+        $tecnicos = $stmt_tecnicos->fetchAll();
+    }
     
 } catch(PDOException $e) {
     $error = 'Error al cargar los tickets.';
@@ -277,7 +304,9 @@ try {
                                                     <?php if ($ticket['tecnico_asignado']): ?>
                                                         <span class="badge bg-info"><?php echo htmlspecialchars($ticket['tecnico_asignado']); ?></span>
                                                     <?php else: ?>
-                                                        <span class="badge bg-secondary">Sin asignar</span>
+                                                        <button class="btn btn-sm btn-warning" onclick="abrirModalAsignar(<?php echo $ticket['id_ticket']; ?>)">
+                                                            <i class="fas fa-user-plus me-1"></i> Asignar
+                                                        </button>
                                                     <?php endif; ?>
                                                 </td>
                                             <?php endif; ?>
@@ -324,6 +353,51 @@ try {
         </div>
     </div>
     
+    <?php if ($rol === 'admin'): ?>
+    <!-- Modal para asignar técnico -->
+    <div class="modal fade" id="asignarTecnicoModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Asignar Técnico</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="todos_tickets.php">
+                    <div class="modal-body">
+                        <p>Seleccione un técnico para asignar a este ticket.</p>
+                        <div class="mb-3">
+                            <label for="id_tecnico" class="form-label">Técnicos Disponibles</label>
+                            <select class="form-control" name="id_tecnico" id="id_tecnico" required>
+                                <option value="">-- Seleccionar --</option>
+                                <?php if (!empty($tecnicos)): ?>
+                                    <?php foreach ($tecnicos as $tecnico): ?>
+                                        <option value="<?php echo $tecnico['id_usuario']; ?>">
+                                            <?php echo htmlspecialchars($tecnico['nombre']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                        <input type="hidden" name="id_ticket_asignar" id="id_ticket_asignar">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" name="asignar_tecnico" class="btn btn-primary">Asignar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+
+    <?php if ($rol === 'admin'): ?>
+    <script>
+        function abrirModalAsignar(idTicket) {
+            document.getElementById('id_ticket_asignar').value = idTicket;
+            const modal = new bootstrap.Modal(document.getElementById('asignarTecnicoModal'));
+            modal.show();
+        }
+    </script>
+    <?php endif; ?>

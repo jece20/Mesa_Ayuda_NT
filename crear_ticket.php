@@ -7,25 +7,34 @@ $nombre = $_SESSION['nombre'];
 $success = '';
 $error = '';
 
+// Obtener lista de técnicos para el dropdown
+try {
+    $stmt_tecnicos = $pdo->prepare("SELECT id_usuario, nombre FROM usuarios WHERE rol = 'tecnico' AND activo = TRUE ORDER BY nombre");
+    $stmt_tecnicos->execute();
+    $tecnicos = $stmt_tecnicos->fetchAll();
+} catch (PDOException $e) {
+    $tecnicos = [];
+    $error = "No se pudo cargar la lista de técnicos.";
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $asunto = trim($_POST['asunto']);
     $descripcion = trim($_POST['descripcion']);
     $categoria = $_POST['categoria'];
     $prioridad = $_POST['prioridad'];
-    
+    $id_tecnico_asignado = !empty($_POST['id_tecnico_asignado']) ? $_POST['id_tecnico_asignado'] : null;
+
     if (empty($asunto) || empty($descripcion) || empty($categoria)) {
         $error = 'Por favor, complete todos los campos obligatorios.';
     } else {
         try {
-            $stmt = $pdo->prepare("INSERT INTO tickets (id_usuario, asunto, descripcion, categoria, prioridad) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$usuario_id, $asunto, $descripcion, $categoria, $prioridad]);
+            $stmt = $pdo->prepare("INSERT INTO tickets (id_usuario, asunto, descripcion, categoria, prioridad, id_tecnico_asignado) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$usuario_id, $asunto, $descripcion, $categoria, $prioridad, $id_tecnico_asignado]);
             
             $success = 'Ticket creado exitosamente. Un técnico lo revisará pronto.';
             
             // Limpiar formulario
-            $asunto = $descripcion = '';
-            $categoria = 'General';
-            $prioridad = 'Media';
+            $_POST = [];
         } catch(PDOException $e) {
             $error = 'Error al crear el ticket. Intente más tarde.';
         }
@@ -170,6 +179,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         <option value="Media" <?php echo (isset($_POST['prioridad']) && $_POST['prioridad'] === 'Media') ? 'selected' : ''; ?>>Media</option>
                                         <option value="Alta" <?php echo (isset($_POST['prioridad']) && $_POST['prioridad'] === 'Alta') ? 'selected' : ''; ?>>Alta</option>
                                         <option value="Urgente" <?php echo (isset($_POST['prioridad']) && $_POST['prioridad'] === 'Urgente') ? 'selected' : ''; ?>>Urgente</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="id_tecnico_asignado" class="form-label">
+                                        <i class="fas fa-user-cog me-2"></i>Asignar a Técnico (Opcional)
+                                    </label>
+                                    <select class="form-control" id="id_tecnico_asignado" name="id_tecnico_asignado">
+                                        <option value="">Sin Asignar</option>
+                                        <?php foreach ($tecnicos as $tecnico): ?>
+                                            <option value="<?php echo $tecnico['id_usuario']; ?>"
+                                                <?php echo (isset($_POST['id_tecnico_asignado']) && $_POST['id_tecnico_asignado'] == $tecnico['id_usuario']) ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($tecnico['nombre']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
                                 

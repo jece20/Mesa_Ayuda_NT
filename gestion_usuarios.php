@@ -47,6 +47,35 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['eliminar_usuario'])) {
     }
 }
 
+// Procesar creación de nuevo usuario
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['crear_usuario'])) {
+    $nombre_nuevo = trim($_POST['nombre_nuevo']);
+    $correo_nuevo = trim($_POST['correo_nuevo']);
+    $contrasena_nueva = $_POST['contrasena_nueva'];
+    $rol_nuevo = $_POST['rol_nuevo'];
+
+    if (empty($nombre_nuevo) || empty($correo_nuevo) || empty($contrasena_nueva) || empty($rol_nuevo)) {
+        $error = 'Por favor, complete todos los campos para crear el usuario.';
+    } else {
+        try {
+            // Verificar si el correo ya existe
+            $stmt = $pdo->prepare("SELECT id_usuario FROM usuarios WHERE correo = ?");
+            $stmt->execute([$correo_nuevo]);
+            
+            if ($stmt->fetch()) {
+                $error = 'El correo electrónico ya está registrado.';
+            } else {
+                // Insertar nuevo usuario
+                $stmt = $pdo->prepare("INSERT INTO usuarios (nombre, correo, contrasena, rol) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$nombre_nuevo, $correo_nuevo, $contrasena_nueva, $rol_nuevo]);
+                $success = 'Usuario creado exitosamente.';
+            }
+        } catch(PDOException $e) {
+            $error = 'Error al crear el usuario.';
+        }
+    }
+}
+
 // Obtener lista de usuarios
 try {
     $stmt = $pdo->prepare("SELECT id_usuario, nombre, correo, rol, 
@@ -144,10 +173,13 @@ try {
             <?php endif; ?>
             
             <div class="card">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">
                         <i class="fas fa-list me-2"></i>Lista de Usuarios
                     </h5>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="abrirModalCrear()">
+                        <i class="fas fa-plus me-2"></i>Crear Nuevo Usuario
+                    </button>
                 </div>
                 <div class="card-body">
                     <?php if (empty($usuarios)): ?>
@@ -221,6 +253,46 @@ try {
         </div>
     </div>
     
+    <!-- Modal para crear usuario -->
+    <div class="modal fade" id="crearUsuarioModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Crear Nuevo Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="nombre_nuevo" class="form-label">Nombre Completo</label>
+                            <input type="text" class="form-control" name="nombre_nuevo" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="correo_nuevo" class="form-label">Correo Electrónico</label>
+                            <input type="email" class="form-control" name="correo_nuevo" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="contrasena_nueva" class="form-label">Contraseña</label>
+                            <input type="password" class="form-control" name="contrasena_nueva" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="rol_nuevo" class="form-label">Rol</label>
+                            <select class="form-control" name="rol_nuevo" required>
+                                <option value="tecnico" selected>Técnico</option>
+                                <option value="cliente">Cliente</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" name="crear_usuario" class="btn btn-primary">Crear Usuario</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal para cambiar rol (reutilizable) -->
     <div class="modal fade" id="cambiarRolModal" tabindex="-1">
         <div class="modal-dialog">
@@ -336,6 +408,12 @@ try {
             });
         });
         
+        // Función para abrir modal de creación
+        function abrirModalCrear() {
+            const modal = new bootstrap.Modal(document.getElementById('crearUsuarioModal'));
+            modal.show();
+        }
+
         // Función para abrir modal de cambio de rol
         function abrirModalRol(idUsuario, nombreUsuario, rolActual) {
             // Cerrar cualquier modal abierto
