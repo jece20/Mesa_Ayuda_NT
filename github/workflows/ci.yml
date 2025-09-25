@@ -1,0 +1,62 @@
+# Nombre del flujo de trabajo
+name: PHP CRUD CI/CD
+
+# Evento que dispara el flujo de trabajo
+on:
+  push:
+    branches:
+      - main  # Se ejecuta al hacer push en la rama principal
+
+# Los 'jobs' son los trabajos que se ejecutarán en el flujo de trabajo
+jobs:
+  build_and_test:
+    # El entorno en el que se ejecutará el job
+    runs-on: ubuntu-latest
+
+    # Pasos del job
+    steps:
+      # Paso 1: Clonar el repositorio
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Paso 2: Configurar PHP y sus extensiones
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'  # Puedes cambiar la versión de PHP aquí
+          extensions: pdo_mysql # Instala la extensión de MySQL
+          tools: composer
+
+      # Paso 3: Instalar dependencias de Composer (si las tienes)
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress
+
+      # Paso 4: Configurar la base de datos de pruebas (usando Docker)
+      - name: Start MySQL container
+        run: docker-compose -f docker-compose.yml up -d
+        # Puedes crear un docker-compose.yml para levantar un servicio de MySQL
+        # o simplemente usar una acción preconfigurada como `mysql-action`
+
+      # Paso 5: Ejecutar pruebas (si tienes)
+      - name: Run PHPUnit tests
+        run: ./vendor/bin/phpunit # Asegúrate de que este es el comando correcto para tus tests
+
+  deploy:
+    # Se asegura de que el job de despliegue solo se ejecute si el de pruebas fue exitoso
+    needs: build_and_test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Paso 1: Desplegar por SSH/SCP
+      # Reemplaza los valores con los de tu servidor
+      - name: Deploy to production server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "."
+          target: "/var/www/html/tu-proyecto-crud" # La ruta de tu proyecto en el servidor
