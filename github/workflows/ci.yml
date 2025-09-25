@@ -59,4 +59,8 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
           source: "."
+<<<<<<< HEAD
           target: "/var/www/html/tu-proyecto-crud" # La ruta de tu proyecto en el servidor
+=======
+          target: "/var/www/html/tu-proyecto-crud" # La ruta de tu proyecto en el servidor
+>>>>>>> 9c5133c (Agregué un pipeline)

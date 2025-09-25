@@ -25,6 +25,7 @@ DELIMITER $$
 --
 -- Procedimientos
 --
+<<<<<<< HEAD
 CREATE DEFINER=`root`@`localhost` PROCEDURE `AsignarTecnico` (IN `p_id_ticket` INT, IN `p_id_tecnico` INT, IN `p_id_usuario_admin` INT)   BEGIN
     DECLARE v_tecnico_nombre VARCHAR(100);
 
@@ -79,6 +80,62 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `CrearTicket` (IN `p_id_usuario` INT
     VALUES (v_id_ticket, p_id_usuario, 'Creación', 'Ticket creado por el usuario');
     
     SELECT v_id_ticket as id_ticket_creado;
+=======
+CREATE DEFINER=`root`@`localhost` PROCEDURE `AsignarTecnico` (IN `p_id_ticket` INT, IN `p_id_tecnico` INT, IN `p_id_usuario_admin` INT)   BEGIN
+    DECLARE v_tecnico_nombre VARCHAR(100);
+
+    -- Obtener el nombre del técnico para el log
+    SELECT nombre INTO v_tecnico_nombre FROM usuarios WHERE id_usuario = p_id_tecnico;
+
+    -- Actualizar el ticket en la tabla principal
+    UPDATE tickets 
+    SET 
+        id_tecnico_asignado = p_id_tecnico,
+        -- Opcional: Cambiar estado a 'En proceso' si estaba 'Pendiente' al asignar
+        estado = IF(estado = 'Pendiente', 'En proceso', estado)
+    WHERE id_ticket = p_id_ticket;
+    
+    -- Insertar el log de la asignación con el NOMBRE del técnico
+    INSERT INTO logs_tickets (id_ticket, id_usuario, accion, descripcion)
+    VALUES (
+        p_id_ticket, 
+        p_id_usuario_admin, 
+        'Asignación', 
+        CONCAT('Ticket asignado al técnico: ', COALESCE(v_tecnico_nombre, 'ID Desconocido'))
+    );
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `CambiarEstadoTicket` (IN `p_id_ticket` INT, IN `p_nuevo_estado` VARCHAR(30), IN `p_id_usuario` INT, IN `p_comentario` TEXT)   BEGIN
+    DECLARE v_estado_anterior VARCHAR(30);
+    
+    SELECT estado INTO v_estado_anterior FROM tickets WHERE id_ticket = p_id_ticket;
+    
+    UPDATE tickets 
+    SET estado = p_nuevo_estado,
+        fecha_ultima_actualizacion = NOW(),
+        fecha_resolucion = CASE WHEN p_nuevo_estado = 'Resuelto' THEN NOW() ELSE fecha_resolucion END
+    WHERE id_ticket = p_id_ticket;
+    
+    -- Insertar log
+    INSERT INTO logs_tickets (id_ticket, id_usuario, accion, descripcion)
+    VALUES (p_id_ticket, p_id_usuario, 'Cambio de estado', 
+            CONCAT('Estado cambiado de ', v_estado_anterior, ' a ', p_nuevo_estado, '. ', COALESCE(p_comentario, '')));
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `CrearTicket` (IN `p_id_usuario` INT, IN `p_asunto` VARCHAR(255), IN `p_descripcion` TEXT, IN `p_categoria` VARCHAR(50), IN `p_prioridad` VARCHAR(20))   BEGIN
+    DECLARE v_id_ticket INT;
+    
+    INSERT INTO tickets (id_usuario, asunto, descripcion, categoria, prioridad)
+    VALUES (p_id_usuario, p_asunto, p_descripcion, p_categoria, p_prioridad);
+    
+    SET v_id_ticket = LAST_INSERT_ID();
+    
+    -- Insertar log
+    INSERT INTO logs_tickets (id_ticket, id_usuario, accion, descripcion)
+    VALUES (v_id_ticket, p_id_usuario, 'Creación', 'Ticket creado por el usuario');
+    
+    SELECT v_id_ticket as id_ticket_creado;
+>>>>>>> 9c5133c (Agregué un pipeline)
 END$$
 
 DELIMITER ;
@@ -255,18 +312,32 @@ INSERT INTO `tickets` (`id_ticket`, `id_usuario`, `asunto`, `descripcion`, `cate
 -- Disparadores `tickets`
 --
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trigger_actualizar_fecha_ticket` BEFORE UPDATE ON `tickets` FOR EACH ROW BEGIN
     SET NEW.fecha_ultima_actualizacion = NOW();
+=======
+CREATE TRIGGER `trigger_actualizar_fecha_ticket` BEFORE UPDATE ON `tickets` FOR EACH ROW BEGIN
+    SET NEW.fecha_ultima_actualizacion = NOW();
+>>>>>>> 9c5133c (Agregué un pipeline)
 END
 $$
 DELIMITER ;
 DELIMITER $$
+<<<<<<< HEAD
 CREATE TRIGGER `trigger_log_cambio_estado` AFTER UPDATE ON `tickets` FOR EACH ROW BEGIN
     IF OLD.estado != NEW.estado THEN
         INSERT INTO logs_tickets (id_ticket, id_usuario, accion, descripcion)
         VALUES (NEW.id_ticket, COALESCE(NEW.id_tecnico_asignado, NEW.id_usuario), 'Cambio de estado automático', 
                 CONCAT('Estado cambiado de ', OLD.estado, ' a ', NEW.estado));
     END IF;
+=======
+CREATE TRIGGER `trigger_log_cambio_estado` AFTER UPDATE ON `tickets` FOR EACH ROW BEGIN
+    IF OLD.estado != NEW.estado THEN
+        INSERT INTO logs_tickets (id_ticket, id_usuario, accion, descripcion)
+        VALUES (NEW.id_ticket, COALESCE(NEW.id_tecnico_asignado, NEW.id_usuario), 'Cambio de estado automático', 
+                CONCAT('Estado cambiado de ', OLD.estado, ' a ', NEW.estado));
+    END IF;
+>>>>>>> 9c5133c (Agregué un pipeline)
 END
 $$
 DELIMITER ;
